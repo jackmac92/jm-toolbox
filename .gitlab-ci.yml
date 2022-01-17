@@ -2,3 +2,7 @@ include:
   - project: "quickstart-templates/ci-templates"
     ref: master
     file: "racket/base.yml"
+
+semantic-releaser:
+  variables:
+    RELEASE_ASSETS: '["./main"]'
