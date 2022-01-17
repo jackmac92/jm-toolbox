@@ -1,0 +1,16 @@
+image: racket:8.3-full
+
+stages:
+  - test
+  - build
+
+before_script:
+  - raco pkg setup
+
+test:
+  script:
+    - raco test *.rkt
+
+build:
+  script:
+    - raco exe main.rkt
