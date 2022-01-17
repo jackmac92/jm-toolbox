@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/string)
+(require casemate)
 
 (define (kebab-to-camel-legacy s)
   (string-join
