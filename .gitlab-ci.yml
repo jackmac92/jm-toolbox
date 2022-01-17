@@ -10,7 +10,7 @@ before_script:
 coverage:
   stage: test
   script:
-    - raco pkg install cover --batch --auto
+    - raco pkg install --batch --auto cover
     - raco cover .
 
 test:
