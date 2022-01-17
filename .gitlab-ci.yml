@@ -1,13 +1,16 @@
 image: racket/racket:8.3-full
 
+variables:
+  RACO_PKG_NAME: jm-toolbox
+
 stages:
   - test
   - build
   - publish
 
 before_script:
+  - raco pkg install --no-docs --batch --auto --name $RACO_PKG_NAME
   - raco setup --fail-fast
-  - raco pkg install --batch --auto
 
 coverage:
   stage: test
@@ -18,7 +21,8 @@ coverage:
 test:
   stage: test
   script:
-    - raco test *.rkt
+    - raco setup --check-pkg-deps --unused-pkg-deps $RACO_PKG_NAME
+    - raco test -x -p $RACO_PKG_NAME
 
 build:
   stage: build
