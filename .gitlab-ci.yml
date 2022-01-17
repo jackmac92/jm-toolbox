@@ -5,7 +5,7 @@ stages:
   - build
 
 before_script:
-  - raco pkg install --batch --auto
+  - raco setup --no-docs --fail-fast
 
 coverage:
   stage: test
