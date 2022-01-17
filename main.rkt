@@ -1,7 +1,8 @@
 #lang racket/base
 
-(provide (for-syntax (all-from-out 'anaphoric)))
-(provide (for-syntax (all-from-out 'threading)))
+(require reprovide/reprovide)
+(reprovide (for-syntax anaphoric))
+(reprovide (for-syntax threading))
 
 (module+ main
   (require racket/cmdline)
