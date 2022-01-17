@@ -5,7 +5,7 @@ stages:
   - build
 
 before_script:
-  - raco pkg setup
+  - raco pkg install
 
 test:
   stage: test
