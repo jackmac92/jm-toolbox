@@ -2,7 +2,7 @@
 
 (require reprovide/reprovide)
 (reprovide (for-syntax anaphoric))
-(reprovide (for-syntax threading))
+(reprovide threading)
 
 (module+ main
   (require racket/cmdline)
