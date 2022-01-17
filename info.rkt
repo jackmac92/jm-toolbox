@@ -1,6 +1,6 @@
 #lang info
 (define collection "jm-toolbox")
-(define deps '("base" "casemate"))
+(define deps '("base" "casemate" "ulid" "datetime-lib" "anaphoric" "threading"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib"))
 (define scribblings '(("scribblings/jm-toolbox.scrbl" ())))
 (define pkg-desc "Description Here")
