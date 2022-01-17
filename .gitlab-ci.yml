@@ -5,7 +5,7 @@ stages:
   - build
 
 before_script:
-  - raco setup --no-docs --fail-fast
+  - raco setup --fail-fast
 
 coverage:
   stage: test
