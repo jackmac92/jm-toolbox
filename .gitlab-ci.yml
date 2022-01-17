@@ -17,6 +17,9 @@ coverage:
   script:
     - raco pkg install --batch --auto cover
     - raco cover .
+  artifacts:
+    paths:
+      - coverage
 
 test:
   stage: test
