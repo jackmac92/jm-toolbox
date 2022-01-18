@@ -3,6 +3,9 @@ include:
     ref: master
     file: "racket/base.yml"
 
+variables:
+  RACO_PKG_NAME: jm-toolbox
+
 semantic-releaser:
   variables:
     RELEASE_ASSETS: '["./main"]'
