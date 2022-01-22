@@ -2,8 +2,8 @@
 
 (require "type-spec.rkt")
 
-(: for-each (All A) (Source A))
-(define (for-each op))
+;;(: for-each (All A) (Source A))
+;;(define (for-each op))
 
 ;; const forEach = operation => source => {
 ;;                                         let talkback;
