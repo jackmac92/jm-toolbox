@@ -8,4 +8,4 @@ variables:
 
 semantic-releaser:
   variables:
-    RELEASE_ASSETS: '["./main"]'
+    RELEASE_ASSETS: '[{ "path": "./main", "label": "the executable" }]'
