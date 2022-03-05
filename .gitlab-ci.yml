@@ -8,4 +8,4 @@ variables:
 
 semantic-releaser:
   variables:
-    RELEASE_ASSETS: '[{ "path": "./main", "label": "the executable" }]'
+    RELEASE_ASSETS: '[{ "path": "./jm-toolbox", "label": "the executable" }]'
