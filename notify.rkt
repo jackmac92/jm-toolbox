@@ -6,8 +6,8 @@
 
 (provide dunstify)
 
-(define (dunstify n)
-  (with-output-to-string (lambda () (system (format "dunstify ~a" n)))))
+(define (dunstify n #:title title #:subtitle [subtitle ""])
+  (with-output-to-string (lambda () (system (format "dunstify ~a ~s ~s" n title subtitle)))))
 
 ;; timeout
 ;;icon
