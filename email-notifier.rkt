@@ -29,7 +29,7 @@
   (define email-count (length email-infos))
   (define email-ids (for/list ([e email-infos])
                       (last (string-split e))))
-  (displayln (format "~a has ~a new messages" acct email-count))
+  (log-debug (format "~a has ~a new messages" acct email-count))
   (define new-email-count (- email-count last-check-email-count))
   (when (or (and (> email-count 0) (= 1 (random 2))) (> new-email-count 0))
     (thread (lambda ()
@@ -44,15 +44,17 @@
                                         #:title (format "~a received email" acct)
                                         #:subtitle (format "~a new emails" email-count))))
                 (case (string-trim response)
-                  [("1") (begin (displayln "Handling timeout"))]
-                  [("2") (begin (displayln "Handling dismissed"))]
+                  [("1") (begin (log-info "Handling timeout"))]
+                  [("2") (begin (log-info "Handling dismissed"))]
                   [("default") (begin
-                                 (displayln "Handling default action")
+                                 (log-debug "Handling default action")
                                  (define email-ids-as-stdin (string-join email-ids "\n"))
-                                 (displayln email-ids-as-stdin)
-                                 (with-input-from-string email-ids-as-stdin
-                                   (lambda ()
-                                     (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct)))))])))))
+                                 (log-debug email-ids-as-stdin)
+                                 (log-debug "Action handler received ~a" (with-output-to-string
+                                                                           (lambda ()
+                                                                             (with-input-from-string email-ids-as-stdin
+                                                                               (lambda ()
+                                                                                 (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))))))))])))))
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count))
 
@@ -63,7 +65,10 @@
   (define color (list-ref colors (index-of accts acct)))
   (thread (lambda () (generate-periodic-email-notifs acct id color))))
 
-(displayln "Starting")
-(with-logging-to-port (logging-output-port)
-  (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
-    (thread-wait t)))
+(log-debug "Starting")
+(with-logging-to-port
+  logging-output-port
+  (lambda ()
+    (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
+      (thread-wait t)))
+  'debug)
