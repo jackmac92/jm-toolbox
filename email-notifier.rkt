@@ -7,10 +7,22 @@
  racket/string
  racket/list
  racket/file
+ racket/logging
+
+ basedir
+
  "./notmuch.rkt" "./notify.rkt" "./shellpers.rkt")
 
 
 (define accts (string-split (file->string (build-path (find-system-path 'home-dir) ".local/maildir-email-acct-short-names"))))
+
+(define base-logger (make-logger))
+
+(define make-log-file (lambda components (let ((logfilepath (apply build-path components)))
+                                           (make-parent-directory* logfilepath)
+                                           (open-output-file logfilepath #:exists 'append))))
+
+(define logging-output-port (make-log-file (writable-runtime-file "email-notifier")))
 
 (define (generate-periodic-email-notifs acct id color [last-check-email-count 0])
   (define email-infos (notmuch-list-unread acct))
@@ -52,5 +64,6 @@
   (thread (lambda () (generate-periodic-email-notifs acct id color))))
 
 (displayln "Starting")
-(for ([t (for/list ([acct accts]) (start-email-notifier acct))])
-  (thread-wait t))
+(with-logging-to-port (logging-output-port)
+  (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
+    (thread-wait t)))
