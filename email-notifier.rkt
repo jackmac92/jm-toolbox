@@ -6,9 +6,11 @@
  racket/port
  racket/string
  racket/list
- "./notmuch.rkt" "./notify.rkt" "./list-utils.rkt" "./shellpers.rkt")
+ racket/file
+ "./notmuch.rkt" "./notify.rkt" "./shellpers.rkt")
 
-(define accts '("cbi" "jackmccown7" "pitchapp" "personalj79" "colgate"))
+
+(define accts (string-split (file->string (build-path (find-system-path 'home-dir) ".local/maildir-email-acct-short-names"))))
 
 (define (generate-periodic-email-notifs acct id color [last-check-email-count 0])
   (define email-infos (notmuch-list-unread acct))
@@ -17,10 +19,10 @@
                       (last (string-split e))))
   (displayln (format "~a has ~a new messages" acct email-count))
   (define new-email-count (- email-count last-check-email-count))
-  (when ( > new-email-count 0)
+  (when (or (and (> email-count 0) (= 1 (random 2))) (> new-email-count 0))
     (thread (lambda ()
               (let ((response (dunstify (stringify-flag-pairs (list
-                                                               (cons "--timeout" (* 1000 60 20))
+                                                               (cons "--timeout" (* 1000 20))
                                                                (cons "--icon" "/usr/share/icons/HighContrast/scalable/apps-extra/internet-mail.svg")
                                                                (cons "--hints" "string:category:email.arrived")
                                                                (cons "--hints" (format "string:bgcolor:~a" color))
@@ -38,7 +40,7 @@
                                  (displayln email-ids-as-stdin)
                                  (with-input-from-string email-ids-as-stdin
                                    (lambda ()
-                                     (system "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails"))))])))))
+                                     (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct)))))])))))
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count))
 
@@ -49,5 +51,6 @@
   (define color (list-ref colors (index-of accts acct)))
   (thread (lambda () (generate-periodic-email-notifs acct id color))))
 
+(displayln "Starting")
 (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
   (thread-wait t))
