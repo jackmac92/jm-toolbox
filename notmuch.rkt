@@ -20,7 +20,7 @@
   (notmuch-dump-extract-message-ids (notmuch-dump q)))
 
 (define (notmuch-list-unread acct)
-  (notmuch-dump (format "is:unread AND is:inbox AND tag:~a" acct)))
+  (notmuch-dump (format "is:unread AND is:inbox AND not is:archive AND not is:trash AND tag:~a" acct)))
 
 (define (notmuch-count-unread acct)
   (length (notmuch-list-unread acct)))
