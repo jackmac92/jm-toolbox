@@ -31,10 +31,10 @@
                       (last (string-split e))))
   (log-debug (format "~a has ~a new messages" acct email-count))
   (define new-email-count (- email-count last-check-email-count))
-  (when (or (and (> email-count 0) (= 1 (random 2))) (> new-email-count 0))
+  (when (and (> email-count 0) (or (> new-email-count 0) (= 1 (random 100))))
     (thread (lambda ()
               (let ((response (dunstify (stringify-flag-pairs (list
-                                                               (cons "--timeout" (* 1000 20))
+                                                               (cons "--timeout" (* 1000 60 10))
                                                                (cons "--icon" "/usr/share/icons/HighContrast/scalable/apps-extra/internet-mail.svg")
                                                                (cons "--hints" "string:category:email.arrived")
                                                                (cons "--hints" (format "string:bgcolor:~a" color))
@@ -49,12 +49,12 @@
                   [("default") (begin
                                  (log-debug "Handling default action")
                                  (define email-ids-as-stdin (string-join email-ids "\n"))
-                                 (log-debug email-ids-as-stdin)
-                                 (log-debug "Action handler received ~a" (with-output-to-string
-                                                                           (lambda ()
-                                                                             (with-input-from-string email-ids-as-stdin
-                                                                               (lambda ()
-                                                                                 (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))))))))])))))
+                                 (displayln (call-with-output-string (lambda (p)
+                                                                       (parameterize ([current-error-port p]
+                                                                                      [current-input-port (open-input-string email-ids-as-stdin)]
+                                                                                      [current-output-port p])
+                                                                         (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))
+                                                                         (port->string p))))))])))))
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count))
 
