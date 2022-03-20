@@ -24,6 +24,9 @@
 
 (define logging-output-port (make-log-file (writable-runtime-file "email-notifier")))
 
+(define (get-colors-from-wallpaper n)
+  (command->output-lines (format "magick /home/jmccown/.cache/styli.sh/wallpaper.jpg -colors ~a -unique-colors txt: | grep -v enumeration | choose 2" n)))
+
 (define (generate-periodic-email-notifs acct id color [last-check-email-count 0])
   (define email-infos (notmuch-list-unread acct))
   (define email-count (length email-infos))
@@ -58,7 +61,7 @@
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count))
 
-(define colors (shuffle '("#ff71ce" "#01cdfe" "#05ffa1" "#b967ff" "#fffb96")))
+(define colors (shuffle (get-colors-from-wallpaper (length accts))))
 
 (define (start-email-notifier acct)
   (define id (exact-floor (* 20000 (random))))
