@@ -22,7 +22,6 @@
 ;; You can use google/oauth/cli's "main" submodule to get a token for
 ;; yourself for dev/test purposes and store it in the racket prefs
 ;; (which is where lookup-google-token gets it from).
-
 (define t (or
            (lookup-google-token c)
            (let ((newtoken (simple-cli-oauth-login c (list profile-scope calendar-scope))))
@@ -58,7 +57,7 @@
                  (alist->form-urlencoded
                   (for/list
                       ([(i j) args] #:when (keyword? i))
-                    (list i . j))))
+                    (cons i j))))
                 (json-api-get (string->url
                                (format
                                 "https://www.googleapis.com/calendar/v3/calendars/~a/events?~a"
@@ -106,14 +105,6 @@
             empty)))))
 
 (module+ main
-  (require racket/cmdline)
-  (require "calendar.rkt")
-  (define who (box "world"))
-  (command-line
-   #:program "my-program"
-   #:once-each
-   [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-   #:args ()
-   (let ((events (list-my-cals)))
-     (displayln (length events))
-     (displayln (car events)))))
+ (let ((events (list-my-cals)))
+   (displayln (length events))
+   (displayln (car events))))
