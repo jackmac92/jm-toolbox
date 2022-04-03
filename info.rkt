@@ -21,6 +21,7 @@
                "threading"
                "reprovide-lang-lib"
                "typed-racket-lib"
+               "splitflap-lib"
                "http-easy"))
 
 (define build-deps '("scribble-lib" "racket-doc" "at-exp-lib" "rackjure"))
