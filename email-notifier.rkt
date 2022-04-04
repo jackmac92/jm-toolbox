@@ -16,8 +16,6 @@
 
 (define accts (string-split (file->string (build-path (find-system-path 'home-dir) ".local/maildir-email-acct-short-names"))))
 
-(define base-logger (make-logger))
-
 (define make-log-file (lambda components (let ((logfilepath (apply build-path components)))
                                            (make-parent-directory* logfilepath)
                                            (open-output-file logfilepath #:exists 'append))))
@@ -32,6 +30,7 @@
   (define email-count (length email-infos))
   (define email-ids (for/list ([e email-infos])
                       (last (string-split e))))
+  (define font-color (if (use-light-font? color) "#000000" "#ffffff"))
   (log-debug (format "~a has ~a new messages" acct email-count))
   ;; (define new-email-count (- email-count last-check-email-count))
   (when (> email-count 0)
@@ -41,7 +40,7 @@
                                                                (cons "--icon" "/usr/share/icons/HighContrast/scalable/apps-extra/internet-mail.svg")
                                                                (cons "--hints" "string:category:email.arrived")
                                                                (cons "--hints" (format "string:bgcolor:~a" color))
-                                                               (cons "--hints" "string:fgcolor:#000000")
+                                                               (cons "--hints" (format "string:fgcolor:~a" font-color))
                                                                (cons "--replace" id)
                                                                (cons "--action" (format "~s" "default,Open Notmuch"))))
                                         #:title (format "~a received email" acct)
@@ -62,6 +61,19 @@
   (generate-periodic-email-notifs acct id color email-count))
 
 (define colors (shuffle (get-colors-from-wallpaper (length accts))))
+
+(define (hex-str->number hex)
+  (string->number (format "#x~a" hex)))
+
+(define (use-light-font? hex-code)
+  (let ((ltrs (string->list hex-code)))
+     (define red-hex (string (list-ref ltrs 1) (list-ref ltrs 2)))
+     (define green-hex (string (list-ref ltrs 3) (list-ref ltrs 4)))
+     (define blue-hex (string (list-ref ltrs 5) (list-ref ltrs 6)))
+     (define red (hex-str->number red-hex))
+     (define green (hex-str->number green-hex))
+     (define blue (hex-str->number blue-hex))
+     (> (+ (* red 0.299) (* green 0.587) (* blue 0.114)) 186)))
 
 (define (start-email-notifier acct)
   (define id (exact-floor (* 20000 (random))))
