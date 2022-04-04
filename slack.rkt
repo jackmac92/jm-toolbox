@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/cmdline net/http-easy)
+(require racket/cmdline net/http-easy
+         gregor)
 
 
 (define (slack-api-req path body)
@@ -22,9 +23,14 @@
 ;;                      "status_expiration": expiration})
 ;;     ;
 
+(define forty-five-min (* 60 45))
+
 (command-line
   #:program "slacker"
   #:args (action)
   (cond
-    [(string=? action "status") (slack-api-req "users.profile.set" (hasheq 'profile (hasheq 'status_emoji ":hellmo:"
-                                                                                            'status_text "test")))]))
+    [(string=? action "status") (slack-api-req "users.profile.set" (hasheq
+                                                                    'profile
+                                                                    (hasheq 'status_emoji ":hellmo:"
+                                                                            'status_expiration (+ (current-posix-seconds) forty-five-min)
+                                                                            'status_text "test")))]))
