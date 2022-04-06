@@ -2,10 +2,23 @@
 
 (require
   splitflap
+  json
   (prefix-in http-client: net/http-easy)
   web-server/servlet
   web-server/servlet-env)
 
+(define (read-custom-feed-json feedid)
+  ())
+(define (add-to-custom-feed req)
+  (let ((reqjson (bytes->jsexpr (request-post-data/raw req))))
+    (let ((feedid (hash-ref reqjson 'feed))
+          (url (hash-ref reqjson 'url)))
+
+      (log-info "Feed ~a adding ~s" feedid url)))
+
+
+  ;; 
+  (response/empty))
 
 (define (write-feed-response req feed)
   ;; TODO how to auto define the url below based on the feed-id and basename?
@@ -17,7 +30,7 @@
 URL routing table (URL dispatcher)
 (define-values (dispatch _generate-url)
   (dispatch-rules
-   ;; [("custom") #:method "post" add-to-custom-feed]
+   [("custom") #:method "post" add-to-custom-feed]
    ;; [("custom") my-custom-feed]
    ;; [("reddit-best-of") reddit-best-of]
    [("health") (lambda (_) (response/empty))]
