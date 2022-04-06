@@ -76,7 +76,9 @@
      (> (+ (* red 0.299) (* green 0.587) (* blue 0.114)) 186)))
 
 (define (start-email-notifier acct)
-  (define id (exact-floor (* 20000 (random))))
+  (define id (for/sum
+                 ([c (string->list acct)])
+               (char->integer c)))
   (define color (list-ref colors (index-of accts acct)))
   (thread (lambda () (generate-periodic-email-notifs acct id color))))
 
