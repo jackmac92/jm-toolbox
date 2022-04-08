@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require racket/cmdline net/http-easy
-         gregor)
+(require racket/cmdline
+         net/http-easy)
 
 
 (define (slack-api-req path body)
@@ -9,28 +9,32 @@
         #:auth (bearer-auth (getenv "SLACK_API_TOKEN"))
         #:json body))
 
-;; (slack-api-req "users.profile.set" (hasheq 'profile "PROFILE_STUFF"))
-
-;; (post "https://slack.com/api/users.profile.set"
-;;       #:form (list (cons 'profile "PROFILE_STUFF") (cons 'token "TOKEN")))
-;; PROFILE="{\"status_emoji\":\"$EMOJI\",\"status_text\":\"$TEXT\"}"
-;; RESPONSE=$(curl -s --data token="$TOKEN" \
-;;     --data-urlencode profile="$PROFILE" \
-;;     https://slack.com/api/users.profile.set)
-;; let profile = json!({
-;;                      "status_emoji": status.emoji,
-;;                      "status_text": status.text,
-;;                      "status_expiration": expiration})
-;;     ;
-
 (define forty-five-min (* 60 45))
 
+(define presets (hasheq
+                 'reset (hasheq 'status_emoji ""
+                                'status_expiration 0
+                                'status_text "")
+                 'taz (hasheq 'status_emoji ":jump:"
+                              'status_expiration (floor (+ (current-seconds) forty-five-min))
+                              'status_text "walking Taz")
+                 'zoom (hasheq 'status_emoji ":zoom:"
+                               'status_expiration 0
+                               'status_text "In a zoom meeting")
+                 'lunch (hasheq 'status_emoji ":chompy:"
+                                'status_expiration (floor (+ (current-seconds) forty-five-min))
+                                'status_text "eating")
+                 'testing (hasheq 'status_emoji ":hellmo:"
+                                  'status_expiration (floor (+ (current-seconds) forty-five-min))
+                                  'status_text "test")))
+
 (command-line
-  #:program "slacker"
-  #:args (action)
-  (cond
-    [(string=? action "status") (slack-api-req "users.profile.set" (hasheq
-                                                                    'profile
-                                                                    (hasheq 'status_emoji ":hellmo:"
-                                                                            'status_expiration (+ (current-posix-seconds) forty-five-min)
-                                                                            'status_text "test")))]))
+ #:program "slacker"
+ #:args (action [subcommand #f])
+ (cond
+   [(string=? action "status") (slack-api-req
+                                "users.profile.set"
+                                (hasheq 'profile
+                                        (hash-ref
+                                         presets
+                                         (string->symbol (or subcommand "reset")))))]))
