@@ -55,10 +55,10 @@
                        (log-debug "Handling default action")
                        (displayln (call-with-output-string (lambda (p)
                                                              (parameterize ([current-error-port p]
-                                                                            [current-input-port (open-input-string (string-join email-ids "\n"))]
-                                                                            [current-output-port p])
-                                                               (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))
-                                                               (port->string p))))))]))
+                                                                            [current-output-port p]
+                                                                            [current-input-port (open-input-string (string-join email-ids "\n"))])
+                                                               (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct)))))))]))
+                                                               
 
   (if (> new-email-count 0)
       (begin
