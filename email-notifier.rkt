@@ -21,6 +21,8 @@
 
 (define logging-output-port (make-log-file (writable-runtime-file "email-notifier")))
 
+(define repeat-notif-interval-sec (make-parameter 300))
+
 (define (get-colors-from-wallpaper n)
   (command->output-lines (format "magick /home/jmccown/.cache/styli.sh/wallpaper.jpg -colors ~a -unique-colors txt: | grep -v enumeration | choose 2" n)))
 
@@ -62,7 +64,9 @@
       (begin
         (set! last-notif-ts (current-seconds))
         (thread (lambda () (dunstify-helper (format "~a NEW email" acct) (format "~a new emails" email-count)))))
-      (when (> 200 (- (current-seconds) last-notif-ts))
+      (when (and
+             (< (repeat-notif-interval-sec) (- (current-seconds) last-notif-ts))
+             (not (= 0 last-notif-ts)))
         (set! last-notif-ts (current-seconds))
         (thread (lambda () (dunstify-helper (format "~a still has email" acct) (format "~a total emails" email-count))))))
   (sleep 15)
@@ -90,12 +94,14 @@
   (define color (list-ref colors (index-of accts acct)))
   (thread (lambda () (generate-periodic-email-notifs acct id color))))
 
-(log-debug "Starting")
+(define (start-all-notifiers)
+  (displayln "Starting")
+  (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
+    (thread-wait t)))
+
 (with-logging-to-port
   logging-output-port
-  (lambda ()
-    (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
-      (thread-wait t)))
+  start-all-notifiers
   'debug)
 
 ;; (module+ test
