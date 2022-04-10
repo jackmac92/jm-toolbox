@@ -60,15 +60,16 @@
                                                                (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct)))))))]))
                                                                
 
-  (if (> new-email-count 0)
-      (begin
-        (set! last-notif-ts (current-seconds))
-        (thread (lambda () (dunstify-helper (format "~a NEW email" acct) (format "~a new emails" email-count)))))
-      (when (and
-             (< (repeat-notif-interval-sec) (- (current-seconds) last-notif-ts))
-             (not (= 0 last-notif-ts)))
-        (set! last-notif-ts (current-seconds))
-        (thread (lambda () (dunstify-helper (format "~a still has email" acct) (format "~a total emails" email-count))))))
+  (when (> email-count 0)
+    (if (> new-email-count 0)
+        (begin
+          (set! last-notif-ts (current-seconds))
+          (thread (lambda () (dunstify-helper (format "~a NEW email" acct) (format "~a new emails" email-count)))))
+        (when (and
+               (< (repeat-notif-interval-sec) (- (current-seconds) last-notif-ts))
+               (not (= 0 last-notif-ts)))
+          (set! last-notif-ts (current-seconds))
+          (thread (lambda () (dunstify-helper (format "~a still has email" acct) (format "~a total emails" email-count)))))))
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count last-notif-ts))
 
