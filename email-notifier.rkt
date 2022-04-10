@@ -24,6 +24,9 @@
 (define (get-colors-from-wallpaper n)
   (command->output-lines (format "magick /home/jmccown/.cache/styli.sh/wallpaper.jpg -colors ~a -unique-colors txt: | grep -v enumeration | choose 2" n)))
 
+
+
+
 (define (generate-periodic-email-notifs acct id color [last-check-email-count 0] [last-notif-ts 0])
   (define email-infos (notmuch-list-unread acct))
   (define email-count (length email-infos))
@@ -32,35 +35,36 @@
   (define font-color (if (use-light-font? color) "#000000" "#ffffff"))
   (log-debug (format "~a has ~a new messages" acct email-count))
   (define new-email-count (- email-count last-check-email-count))
-  (when (or
-         (> new-email-count 0)
-         (> 3000 (- (current-seconds) last-notif-ts)))
-    (begin
-      (define last-notif-ts (current-seconds))
-      (thread (lambda ()
-                (let ((response (dunstify (stringify-flag-pairs (list
-                                                                 (cons "--timeout" (* 1000 60 20))
-                                                                 (cons "--icon" "/usr/share/icons/HighContrast/scalable/apps-extra/internet-mail.svg")
-                                                                 (cons "--hints" "string:category:email.arrived")
-                                                                 (cons "--hints" (format "string:bgcolor:~a" color))
-                                                                 (cons "--hints" (format "string:fgcolor:~a" font-color))
-                                                                 (cons "--replace" id)
-                                                                 (cons "--action" (format "~s" "default,Open Notmuch"))))
-                                          #:title (format "~a received email" acct)
-                                          #:subtitle (format "~a new emails" email-count))))
-                  (case (string-trim response)
-                    [("1") (begin (log-info "Handling timeout"))]
-                    [("2") (begin (log-info "Handling dismissed"))]
-                    [("default") (begin
-                                   (log-debug "Handling default action")
-                                   (define email-ids-as-stdin (string-join email-ids "\n"))
-                                   (displayln (call-with-output-string (lambda (p)
-                                                                         (parameterize ([current-error-port p]
-                                                                                        [current-input-port (open-input-string email-ids-as-stdin)]
-                                                                                        [current-output-port p])
-                                                                           (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))
-                                                                           (port->string p))))))]))))))
+  (define (dunstify-helper title subtitle)
+    (define response (dunstify (stringify-flag-pairs (list
+                                                      (cons "--timeout" (* 1000 60 20))
+                                                      (cons "--icon" "/usr/share/icons/HighContrast/scalable/apps-extra/internet-mail.svg")
+                                                      (cons "--hints" "string:category:email.arrived")
+                                                      (cons "--hints" (format "string:bgcolor:~a" color))
+                                                      (cons "--hints" (format "string:fgcolor:~a" font-color))
+                                                      (cons "--replace" id)
+                                                      (cons "--action" (format "~s" "default,Open Notmuch"))))
+                               #:title title
+                               #:subtitle subtitle))
+    (case response
+        [("1") (begin (log-info "Handling timeout"))]
+        [("2") (begin (log-info "Handling dismissed"))]
+        [("default") (begin
+                       (log-debug "Handling default action")
+                       (displayln (call-with-output-string (lambda (p)
+                                                             (parameterize ([current-error-port p]
+                                                                            [current-input-port (open-input-string (string-join email-ids "\n"))]
+                                                                            [current-output-port p])
+                                                               (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct))
+                                                               (port->string p))))))]))
 
+  (if (> new-email-count 0)
+      (begin
+        (set! last-notif-ts (current-seconds))
+        (thread (lambda () (dunstify-helper (format "~a NEW email" acct) (format "~a new emails" email-count)))))
+      (when (> 200 (- (current-seconds) last-notif-ts))
+        (set! last-notif-ts (current-seconds))
+        (thread (lambda () (dunstify-helper (format "~a still has email" acct) (format "~a total emails" email-count))))))
   (sleep 15)
   (generate-periodic-email-notifs acct id color email-count last-notif-ts))
 
@@ -96,4 +100,5 @@
 
 ;; (module+ test
 ;;   (require rackunit)
-;;   (check-not-exn (lambda () ())))
+;;   (check-not-exn (lambda ()
+;;                    empty)))
