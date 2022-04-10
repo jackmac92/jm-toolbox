@@ -19,7 +19,6 @@
                                            (make-parent-directory* logfilepath)
                                            (open-output-file logfilepath #:exists 'append))))
 
-(define logging-output-port (make-log-file (writable-runtime-file "email-notifier")))
 
 (define repeat-notif-interval-sec (make-parameter 300))
 
@@ -100,10 +99,16 @@
   (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
     (thread-wait t)))
 
-(with-logging-to-port
-  logging-output-port
-  start-all-notifiers
-  'debug)
+
+(define (init)
+  (parameterize ([current-basedir-program-name "email-notifier"])
+   (define logging-output-port (make-log-file (writable-runtime-file "out.log")))
+   (with-logging-to-port
+     logging-output-port
+     start-all-notifiers
+     'debug)))
+
+(init)
 
 ;; (module+ test
 ;;   (require rackunit)
