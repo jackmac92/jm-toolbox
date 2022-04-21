@@ -20,7 +20,7 @@
                                            (open-output-file logfilepath #:exists 'append))))
 
 
-(define repeat-notif-interval-sec (make-parameter 300))
+(define repeat-notif-interval-sec (make-parameter (* 60 60 2)))
 
 (define (get-colors-from-wallpaper n)
   (command->output-lines (format "magick /home/jmccown/.cache/styli.sh/wallpaper.jpg -colors ~a -unique-colors txt: | grep -v enumeration | choose 2" n)))
@@ -109,8 +109,3 @@
      'debug)))
 
 (init)
-
-;; (module+ test
-;;   (require rackunit)
-;;   (check-not-exn (lambda ()
-;;                    empty)))
