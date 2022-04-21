@@ -60,7 +60,7 @@
                                                                
 
   (when (> email-count 0)
-    (if (> new-email-count 0)
+    (if (not (= new-email-count 0))
         (begin
           (set! last-notif-ts (current-seconds))
           (thread (lambda () (dunstify-helper (format "~a NEW email" acct) (format "~a new emails" email-count)))))
