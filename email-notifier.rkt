@@ -52,13 +52,12 @@
         [("2") (begin (log-info "Handling dismissed"))]
         [("default") (begin
                        (log-debug "Handling default action")
-                       (displayln (call-with-output-string (lambda (p)
+                       (log-debug (call-with-output-string (lambda (p)
                                                              (parameterize ([current-error-port p]
                                                                             [current-output-port p]
                                                                             [current-input-port (open-input-string (string-join email-ids "\n"))])
                                                                (system (format "/home/jmccown/.local/sysspecific_scripts/gui/emacs-view-emails ~s" acct)))))))]))
                                                                
-
   (when (> email-count 0)
     (if (not (= new-email-count 0))
         (begin
@@ -98,7 +97,6 @@
   (displayln "Starting")
   (for ([t (for/list ([acct accts]) (start-email-notifier acct))])
     (thread-wait t)))
-
 
 (define (init)
   (parameterize ([current-basedir-program-name "email-notifier"])
