@@ -11,6 +11,7 @@
          basedir
 
          "./notmuch.rkt"
+         "./mini-project-utils.rkt"
          "./notify.rkt"
          "./shellpers.rkt")
 
@@ -18,19 +19,24 @@
   (string-split (file->string (build-path (find-system-path 'home-dir)
                                           ".local/maildir-email-acct-short-names"))))
 
-(define make-log-file
-  (lambda components
-    (let ([logfilepath (apply build-path components)])
-      (make-parent-directory* logfilepath)
-      (open-output-file logfilepath #:exists 'append))))
+(define root-output-port (make-parameter (current-output-port)))
 
 (define repeat-notif-interval-sec (make-parameter (* 60 60 2)))
 
-(define (get-colors-from-wallpaper n)
+(define (get-colors-from-wal-cache)
+  (define colors-cache
+    (with-input-from-file (build-path (find-system-path 'home-dir) ".cache/wal/colors.json")
+                          (lambda () (read-json))))
+  (hash-values (hash-ref colors-cache 'colors)))
+
+(define (get-colors-from-wallpaper-via-imagemagick n)
   (command->output-lines
    (format
     "magick /home/jmccown/.cache/styli.sh/wallpaper.jpg -colors ~a -unique-colors txt: | grep -v enumeration | choose 2"
     n)))
+
+(define (get-colors-from-wallpaper n)
+  (or (get-colors-from-wal-cache) (get-colors-from-wallpaper-via-imagemagick n)))
 
 (define (generate-periodic-email-notifs acct id color [last-check-email-count 0] [last-notif-ts 0])
   (define email-infos (notmuch-list-unread acct))
@@ -62,12 +68,11 @@
        (begin
          (log-info "Handling dismissed"))]
       [("default")
-       (begin
-         (log-debug "Handling default action")
-         (parameterize ([current-input-port (open-input-string (string-join email-ids "\n"))])
-           (system
-            (format "/home/jmccown/.local/scripts/junk-drawer/notmuch/open-new-msgs-in-emacs ~s"
-                    acct))))]))
+       (subprocess (root-output-port)
+                   (open-input-string (string-join email-ids "\n"))
+                   #f
+                   (build-path (find-system-path 'home-dir) ".local/scripts/junk-drawer/notmuch/open-new-msgs-in-emacs")
+                   acct)]))
 
   (when (> email-count 0)
     (if (not (= new-email-count 0))
@@ -75,7 +80,9 @@
           (set! last-notif-ts (current-seconds))
           (thread (lambda ()
                     (dunstify-helper (format "~a NEW email" acct)
-                                     (format "~a new emails" email-count)))))
+                                     (if (eq? new-email-count email-count)
+                                         (format "~a unread emails" email-count)
+                                         (format "~a/~a NEW/total unread emails" new-email-count email-count))))))
         (when (and (< (repeat-notif-interval-sec) (- (current-seconds) last-notif-ts))
                    (not (= 0 last-notif-ts)))
           (set! last-notif-ts (current-seconds))
