@@ -23,7 +23,11 @@
                "reprovide-lang-lib"
                "typed-racket-lib"
                "splitflap-lib"
-               "http-easy"))
+               "http-easy"
+               "sxml"
+               "argo"
+               "webscraperhelper"
+               "html-parsing"))
 
 (define build-deps '("scribble-lib" "racket-doc" "at-exp-lib" "rackjure"))
 (define scribblings '(("scribblings/jm-toolbox.scrbl" ())))
