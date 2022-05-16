@@ -86,9 +86,56 @@
 (define (fetch-reddit-best-of-json)
   (http-client:response-json (http-client:get "https://www.reddit.com/r/bestof.json")))
 
-(define f (fetch-reddit-best-of-json))
+(define f (fetch-reddit-best-of-json)
+ (for/list ([p (hash-ref (hash-ref f 'data) 'children)])
+   (reddit-post->feed-itm p)))
+
+(define (reddit-post->feed-itm p)
+  (hasheq
+   'url (hash-ref p 'url)
+   'title (hash-ref p 'title)
+   'content (hash-ref p 'url_overridden_by_dest)
+   'author-name (hash-ref p 'author_fullname)
+   'publish-date (hash-ref p 'created_utc)))
+
+;; FeedItem schema
+;; url: string
+;; title: string
+;; content: string
+;; author-name?: string
+;; author-email?: string
+;; published-date?: Date
+;; updated-date?: Date
 
 (provide init)
+
+;; id
+;; title
+;; url_overridden_by_dest
+;; author_is_blocked
+;; score
+;; likes
+;; downs
+;; gildings
+;; num_crossposts
+;; category
+;; subreddit_id
+;; is_video
+;; upvote_ratio
+;; created_utc
+;; subreddit
+;; media_embed
+;; awarders
+;; author
+;; name
+;; view_count
+;; author_fullname
+;; url
+;; created
+;; gilded
+;; all_awardings
+;; content_categories
+;; subreddit_type
 
 (define (start-server)
   (serve/servlet dispatch
