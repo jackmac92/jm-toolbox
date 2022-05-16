@@ -29,7 +29,7 @@
   (make-parameter (build-path (find-system-path 'home-dir) ".local/custom-feeds")))
 
 (define (mint-subfeed-tag topic)
-  (mint-tag-uri "https://feedz.jackdmc.com" "2022" topic))
+  (mint-tag-uri "jackmac79@gmail.com" "2022" topic))
 
 (define (reify-feed-from-file feed-topic)
   (define feeds-info
@@ -86,17 +86,42 @@
 (define (fetch-reddit-best-of-json)
   (http-client:response-json (http-client:get "https://www.reddit.com/r/bestof.json")))
 
-(define f (fetch-reddit-best-of-json)
- (for/list ([p (hash-ref (hash-ref f 'data) 'children)])
-   (reddit-post->feed-itm p)))
+(define reddit-feed-uri (mint-subfeed-tag "bestofreddit"))
 
 (define (reddit-post->feed-itm p)
-  (hasheq
-   'url (hash-ref p 'url)
-   'title (hash-ref p 'title)
-   'content (hash-ref p 'url_overridden_by_dest)
-   'author-name (hash-ref p 'author_fullname)
-   'publish-date (hash-ref p 'created_utc)))
+  (define (create-custom-feed-item item-def)
+    (define item-id (hash-ref item-def 'id))
+    (define item-url (hash-ref item-def 'url))
+    (define item-title (hash-ref item-def 'title))
+    (define item-author-name (hash-ref item-def 'author-name))
+    ;; TODO
+    ; Date: contract violation
+    ;   expected: string in the format ‘YYYY-MM-DD [hh:mm[:ss]]’
+    ;   given: "1652665032.0"
+    (define item-publish-date (format "~a" (hash-ref item-def 'publish-date)))
+    (define content (hash-ref item-def 'content))
+    (feed-item (append-specific reddit-feed-uri item-id)
+               item-url
+               item-title
+               (person item-author-name "jackmac79@gmail.com")
+               (infer-moment item-publish-date)
+               #f
+               content))
+  (create-custom-feed-item (hasheq 'url
+                                   (hash-ref p 'url)
+                                   'id
+                                   (hash-ref p 'id)
+                                   'title
+                                   (hash-ref p 'title)
+                                   'content
+                                   (hash-ref p 'url_overridden_by_dest)
+                                   'author-name
+                                   (hash-ref p 'author_fullname)
+                                   'publish-date
+                                   (hash-ref p 'created_utc))))
+(define f
+  (for/list ([p (hash-ref (hash-ref (fetch-reddit-best-of-json) 'data) 'children)])
+    (reddit-post->feed-itm (hash-ref p 'data))))
 
 ;; FeedItem schema
 ;; url: string
@@ -108,6 +133,8 @@
 ;; updated-date?: Date
 
 (provide init)
+
+(mint-subfeed-tag "bestofreddit")
 
 ;; id
 ;; title
