@@ -68,11 +68,9 @@
        (begin
          (log-info "Handling dismissed"))]
       [("default")
-       (subprocess (root-output-port)
-                   (open-input-string (string-join email-ids "\n"))
-                   #f
-                   (build-path (find-system-path 'home-dir) ".local/scripts/junk-drawer/notmuch/open-new-msgs-in-emacs")
-                   acct)]))
+       (with-input-from-string (string-join email-ids "\n")
+         (lambda ()
+           (system (format "DISPLAY=:1 s notmuch open-new-msgs-in-emacs ~a" acct))))]))
 
   (when (> email-count 0)
     (if (not (= new-email-count 0))
