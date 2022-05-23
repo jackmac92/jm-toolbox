@@ -13,7 +13,7 @@
 (define notif-replace-id (make-parameter #f))
 
 (define (dunstify n #:title title #:subtitle [subtitle ""])
-  (with-output-to-string (lambda () (system (format "dunstify ~a ~s ~s" n title subtitle)))))
+  (string-trim (with-output-to-string (lambda () (system (format "dunstify ~a ~s ~s" n title subtitle))))))
 
 (define (dunstify-param title [subtitle ""])
   (dunstify (stringify-flag-pairs (list
