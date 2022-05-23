@@ -3,6 +3,7 @@
 (define deps '(
                "base"
                "basedir"
+               "gregor"
                "choose-out"
                "data-frame"
                "thread-utils"

@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require basedir
+         gregor
          racket/logging
          splitflap
          json
@@ -94,18 +95,15 @@
     (define item-url (hash-ref item-def 'url))
     (define item-title (hash-ref item-def 'title))
     (define item-author-name (hash-ref item-def 'author-name))
-    ;; TODO
-    ; Date: contract violation
-    ;   expected: string in the format ‘YYYY-MM-DD [hh:mm[:ss]]’
-    ;   given: "1652665032.0"
-    (define item-publish-date (format "~a" (hash-ref item-def 'publish-date)))
+    (define item-publish-date (~t (posix->datetime (hash-ref item-def 'publish-date)) "yyyy-MM-dd"))
+
     (define content (hash-ref item-def 'content))
     (feed-item (append-specific reddit-feed-uri item-id)
                item-url
                item-title
                (person item-author-name "jackmac79@gmail.com")
                (infer-moment item-publish-date)
-               #f
+               (infer-moment item-publish-date)
                content))
   (create-custom-feed-item (hasheq 'url
                                    (hash-ref p 'url)
@@ -119,10 +117,12 @@
                                    (hash-ref p 'author_fullname)
                                    'publish-date
                                    (hash-ref p 'created_utc))))
-(define f
-  (for/list ([p (hash-ref (hash-ref (fetch-reddit-best-of-json) 'data) 'children)])
-    (reddit-post->feed-itm (hash-ref p 'data))))
 
+(feed reddit-feed-uri
+      "https://feedz.jackdmc.com/reddit"
+      "Racket autogen reddt"
+      (for/list ([p (hash-ref (hash-ref (fetch-reddit-best-of-json) 'data) 'children)])
+        (reddit-post->feed-itm (hash-ref p 'data))))
 ;; FeedItem schema
 ;; url: string
 ;; title: string
