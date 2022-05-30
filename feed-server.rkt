@@ -84,6 +84,7 @@
    [("health") (lambda (_) (response/empty))]
    [else (error "There is no procedure to handle the url.")]))
 
+
 (define (fetch-reddit-best-of-json)
   (http-client:response-json (http-client:get "https://www.reddit.com/r/bestof.json")))
 
@@ -123,6 +124,11 @@
       "Racket autogen reddt"
       (for/list ([p (hash-ref (hash-ref (fetch-reddit-best-of-json) 'data) 'children)])
         (reddit-post->feed-itm (hash-ref p 'data))))
+;; TODO before/after param for reddit json
+;; reddit save full json of each post separately
+;; recreate the whole feed on each request?
+;; TODO add hn top posts/comments
+
 ;; FeedItem schema
 ;; url: string
 ;; title: string
