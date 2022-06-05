@@ -25,4 +25,3 @@
 (define y (amb 5 7 3))
 (when (not (equal? (* x y) (* 3 5)))
   (amb))
-(displayln "Done")

@@ -64,6 +64,7 @@
          safe-hash-union
 
          sorted-hash-keys
+         maybe-hash-ref
          )
 
 

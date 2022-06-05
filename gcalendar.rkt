@@ -22,13 +22,6 @@
 ;; You can use google/oauth/cli's "main" submodule to get a token for
 ;; yourself for dev/test purposes and store it in the racket prefs
 ;; (which is where lookup-google-token gets it from).
-(define t (or
-           (lookup-google-token c)
-           (let ((newtoken (simple-cli-oauth-login c (list profile-scope calendar-scope))))
-             (store-google-token! c "main" newtoken)
-             newtoken)))
-
-
 ;; (provide list-my-cals)
 ;; (define/contract list-events
 ;;    (->*
@@ -65,46 +58,55 @@
 ;;                                 (format "pageToken=~a" (hash-ref args '#:page-token))))
 ;;                               #:token (hash-ref args '#:token))))
 
-;; (define (list-my-cals [nextpgtoken #f])
-;;   (with-handlers [(exn:fail:google?
-;;                    (lambda (e)
-;;                      ;; Printing the exception shows all of the detail
-;;                      ;; of it in a way that the default exception
-;;                      ;; printer does not; conversely, letting the
-;;                      ;; default exception printer print it too gets us a
-;;                      ;; pretty stack trace.
-;;                      (pretty-print e)
-;;                      (raise e)))]
-;;     (parameterize ((invalid-token-handler
-;;                     (lambda (old-token retry-counter)
-;;                       ;; When a configured token fails, the
-;;                       ;; invalid-token-handler parameter is called. Here
-;;                       ;; we can try to refresh the token, and if that
-;;                       ;; fails we could also ask the user to sign in
-;;                       ;; again if we wanted. In this instance, we only
-;;                       ;; try the refresh, and if that fails, we fail
-;;                       ;; permanently.
-;;                       (printf "Failed token (retry ~a): ~v\n" retry-counter old-token)
-;;                       (if (zero? retry-counter)
-;;                           (let ((new-token (refresh-token c old-token)))
-;;                             (when new-token
-;;                               (replace-google-token! c new-token)
-;;                               (set! t new-token))
-;;                             new-token)
-;;                           #f))))
-;;       (define r (list-events
-;;                  target-cal
-;;                  #:token t
-;;                  #:order-by "startTime"
-;;                  #:single-events #t
-;;                  #:page-token nextpgtoken))
-;;       (append
-;;        (hash-ref r 'items)
-;;        (aif (hash-ref r 'nextPageToken #f)
-;;             (list-my-cals it)
-;;             empty)))))
 
-;; (module+ main
-;;  (let ((events (list-my-cals)))
-;;    (displayln (length events))
-;;    (displayln (car events))))
+
+
+(module+ main
+ (define t (or
+            (lookup-google-token c)
+            (let ((newtoken (simple-cli-oauth-login c (list profile-scope calendar-scope))))
+              (store-google-token! c "main" newtoken)
+              newtoken)))
+
+ (define (list-my-cals [nextpgtoken #f])
+  (with-handlers [(exn:fail:google?
+                   (lambda (e)
+                     ;; Printing the exception shows all of the detail
+                     ;; of it in a way that the default exception
+                     ;; printer does not; conversely, letting the
+                     ;; default exception printer print it too gets us a
+                     ;; pretty stack trace.
+                     (pretty-print e)
+                     (raise e)))]
+    (parameterize ((invalid-token-handler
+                    (lambda (old-token retry-counter)
+                      ;; When a configured token fails, the
+                      ;; invalid-token-handler parameter is called. Here
+                      ;; we can try to refresh the token, and if that
+                      ;; fails we could also ask the user to sign in
+                      ;; again if we wanted. In this instance, we only
+                      ;; try the refresh, and if that fails, we fail
+                      ;; permanently.
+                      (printf "Failed token (retry ~a): ~v\n" retry-counter old-token)
+                      (if (zero? retry-counter)
+                          (let ((new-token (refresh-token c old-token)))
+                            (when new-token
+                              (replace-google-token! c new-token)
+                              (set! t new-token))
+                            new-token)
+                          #f))))
+      (define r (list-events
+                 target-cal
+                 #:token t
+                 #:order-by "startTime"
+                 #:single-events #t
+                 #:page-token nextpgtoken))
+      (append
+       (hash-ref r 'items)
+       (aif (hash-ref r 'nextPageToken #f)
+            (list-my-cals it)
+            empty)))))
+
+ (let ((events (list-my-cals)))
+   (displayln (length events))
+   (displayln (car events))))

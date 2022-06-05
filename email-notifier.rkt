@@ -121,4 +121,5 @@
     (define logging-output-port (make-log-file (writable-runtime-file "out.log")))
     (with-logging-to-port logging-output-port start-all-notifiers 'debug)))
 
-(init)
+(module+ main
+  (init))
