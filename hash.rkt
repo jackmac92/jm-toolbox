@@ -950,3 +950,7 @@
 ;;   (syntax-parser
 ;;     [(_ kv:kvpat ...)
 ;;      #'(? hash? kv.pattern ...)]))
+
+(define (maybe-hash-ref h r)
+  (when (hash-has-key? h r)
+    (hash-ref h r)))
