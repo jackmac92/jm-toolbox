@@ -1,8 +1,7 @@
 #lang at-exp racket/base
 
 (require
- racket/format
-  xml)
+ racket/format)
 (require web-server/servlet)
 (require web-server/servlet-env)
 (require "./gitlab-api.rkt")
@@ -23,10 +22,19 @@
                 (hash-ref l 'url)))
   (print-xml url chrome-ext-id latest-version))
 
-(define (request-handler req)
+(define (lookup-ext-xml req)
   (define ext (binding:form-value (bindings-assq #"name" (request-bindings/raw req))))
   (define ext-id (binding:form-value (bindings-assq #"id" (request-bindings/raw req))))
   (response/output (lambda (op) (write-bytes (string->bytes/utf-8 (create-xml-dwim ext ext-id)) op))))
+
+(define-values (dispatch _generate-url)
+  (dispatch-rules
+   [("info") lookup-ext-xml]
+   [("health") (lambda (_) (response/empty))]
+   [else (error "There is no procedure to handle the url.")]))
+
+(define (request-handler request)
+  (dispatch request))
 
 (module+ main
   (serve/servlet request-handler
