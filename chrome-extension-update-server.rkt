@@ -22,14 +22,20 @@
                 (hash-ref l 'url)))
   (print-xml url chrome-ext-id latest-version))
 
+(define (lookup-ext-xml-by-name ext)
+  (lambda (req)
+    (define ext-id (binding:form-value (bindings-assq #"id" (request-bindings/raw req))))
+    (response/output (lambda (op) (write-string (create-xml-dwim ext ext-id) op)))))
+
 (define (lookup-ext-xml req)
   (define ext (binding:form-value (bindings-assq #"name" (request-bindings/raw req))))
   (define ext-id (binding:form-value (bindings-assq #"id" (request-bindings/raw req))))
-  (response/output (lambda (op) (write-bytes (string->bytes/utf-8 (create-xml-dwim ext ext-id)) op))))
+  (response/output (lambda (op) (write-string (create-xml-dwim ext ext-id) op))))
 
 (define-values (dispatch _generate-url)
   (dispatch-rules
    [("info") lookup-ext-xml]
+   [("personal-super-cookie") (lookup-ext-xml-by-name "personal-super-cookie")]
    [("health") (lambda (_) (response/empty))]
    [else (error "There is no procedure to handle the url.")]))
 
