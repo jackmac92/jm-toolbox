@@ -2,7 +2,7 @@
 
 (require reprovide/reprovide)
 
-(reprovide racket/format racket/file racket/list racket/string racket/logging racket/port basedir)
+(reprovide racket/format racket/file racket/list racket/string racket/logging racket/port basedir "./shellpers.rkt" "./json.rkt")
 
 (define make-log-file
   (lambda components
