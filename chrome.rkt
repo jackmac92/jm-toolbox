@@ -8,7 +8,7 @@
   (if (eq? (system-type 'os) 'unix)
       (for/first ([c (list "google-chrome-stable" "google-chrome" "google-chrome-beta")])
         (find-executable-path c))
-      (build-path "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")))
+      (build-path "/Applications/Google\\\\ Chrome.app/Contents/MacOS/Google\\\\ Chrome")))
 
 (define (debug-port-flag port)
   (format "--remote-debugging-port=~a" port))
