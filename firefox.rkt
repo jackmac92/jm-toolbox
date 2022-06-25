@@ -2,7 +2,7 @@
 
 (require basedir)
 (require json)
-(require toml)
+;; (require toml)
 
 
 ;; cat ~/.mozilla/firefox/profiles.ini
