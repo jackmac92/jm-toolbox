@@ -3,10 +3,8 @@
 
 (define (litestream-dwim)
   (define p (writable-runtime-file "litestream.sqlite"))
-  (unless (litestream-is-ready?)
-    (error "Litestream is not configured"))
   (restore-litestream-at-path p)
-  (define conn (sqlite3-connect #:database p #:mode 'create))
+  (define conn (sqlite3-connect #:database p))
   (thread (lambda () (start-litestream-backup-at-path p)))
   conn)
 
