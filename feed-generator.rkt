@@ -1,7 +1,8 @@
 #lang racket/base
 
-(require deta
-         splitflap
+(require splitflap
+         ;; group-by conflicts with racket/list
+         (except-in deta group-by)
          racket/string
          basedir
          "./litestream.rkt")
