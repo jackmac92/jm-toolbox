@@ -4,6 +4,9 @@
 
 (reprovide racket/format racket/file racket/list racket/string racket/logging racket/port basedir "./shellpers.rkt" "./json.rkt")
 
+(define-syntax-rule (whereami)
+  (variable-reference->module-source (#%variable-reference)))
+
 (define make-log-file
   (lambda components
     (let ([logfilepath (apply build-path components)])

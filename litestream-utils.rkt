@@ -1,10 +1,12 @@
 #lang racket/base
-(require
-  racket/file
-  racket/system)
+(require racket/file racket/system)
 
-(define (litestream-check-ready?)
-  (andmap getenv '("LITESTREAM_ACCESS_KEY_ID" "LITESTREAM_SECRET_ACCESS_KEY" "LITESTREAM_REGION")))
+(define (ensure-db-dir-exists path)
+  (unless (file-exists? path)
+    (make-parent-directory* path)))
+
+(define (litestream-is-ready?)
+  (and (andmap getenv '("LITESTREAM_ACCESS_KEY_ID" "LITESTREAM_SECRET_ACCESS_KEY" "LITESTREAM_REGION")) (ensure-db-dir-exists)))
 
 (define (restore-litestream-at-path path)
   (make-parent-directory* path)

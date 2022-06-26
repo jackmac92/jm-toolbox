@@ -1,12 +1,13 @@
 #lang racket/base
-(require "litestream-utils.rkt")
+(require db basedir "litestream-utils.rkt")
 
-(define litestream-db-path (make-parameter #f))
-
-(define (restore-litestream)
-  (restore-litestream-at-path (litestream-db-path)))
-
-(define (start-litestream-backup)
-  (thread (lambda () (start-litestream-backup-at-path (litestream-db-path)))))
+(define (litestream-dwim)
+  (define p (writable-runtime-file "litestream.sqlite"))
+  (unless (litestream-is-ready?)
+    (error "Litestream is not configured"))
+  (restore-litestream-at-path p)
+  (define conn (sqlite3-connect #:database p #:mode 'create))
+  (thread (lambda () (start-litestream-backup-at-path p)))
+  conn)
 
 (provide (all-defined-out))
