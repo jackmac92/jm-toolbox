@@ -14,13 +14,15 @@
 ;; items: FeedItem[]
 
 (define-schema persistent-feed-item
-               ([id id/f #:primary-key #:auto-increment] [title string/f #:wrapper string-titlecase]
-                                                         [url string/f #:contract non-empty-string?]
-                                                         [content string/f]
-                                                         [author-name string/f]
-                                                         [author-email string/f]
-                                                         [published-date date/f]
-                                                         [updated-date date/f]))
+  ([id id/f #:primary-key #:auto-increment]
+   ;; [feed-id id/f]
+   [title string/f #:wrapper string-titlecase]
+   [url string/f #:contract non-empty-string?]
+   [content string/f]
+   [author-name string/f]
+   [author-email string/f]
+   [published-date date/f]
+   [updated-date date/f]))
 
 (define (mint-subfeed-tag topic)
   (mint-tag-uri "jackmac79@gmail.com" "2022" topic))
@@ -32,7 +34,11 @@
 (define (init)
   (parameterize ([current-basedir-program-name "rss-feed-generator"])
     (define conn (litestream-dwim))
-    (create-table! conn 'persistent-feed-item)))
+    (create-table! conn 'persistent-feed-item)
+    (in-entities
+     conn
+     (from persistent-feed-item #:as potato))))
+
 
 (module+ main
   (init))

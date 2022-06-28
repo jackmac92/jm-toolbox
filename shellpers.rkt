@@ -2,6 +2,14 @@
 
 (require racket/system racket/port racket/string)
 
+(define my-shell-debug (make-parameter #f))
+
+(define cmd! (lambda cmd-fmt-args
+               (define c (apply format cmd-fmt-args))
+               (when (my-shell-debug)
+                 (displayln c))
+               (system c)))
+
 (define (system->string cmd)
   (with-output-to-string (lambda ()
                            (unless (system cmd)
