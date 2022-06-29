@@ -13,14 +13,14 @@
       ;;or maybe start a thread, where copy-port streams to current-output-port?
       (open-output-file logfilepath #:exists 'append))))
 
-;; (define-syntax-rule (whereami)
-;;   (variable-reference->module-source (#%variable-reference)))
+(define-syntax-rule (whereami)
+  (variable-reference->module-source (#%variable-reference)))
 
-;; (define-syntax-rule (with-project-logging body)
-;;   (parameterize ([current-basedir-program-name (whereami)])
-;;     (with-logging-to-port
-;;         (make-log-file (writable-runtime-file "out.log"))
-;;       ;; TODO somehow run body
-;;       'debug)))
+(define-syntax-rule (with-project-logging body)
+  (parameterize ([current-basedir-program-name (whereami)])
+    (with-logging-to-port
+        (make-log-file (writable-runtime-file "out.log"))
+      ;; TODO somehow run body
+      'debug)))
 
 (provide (all-defined-out))
