@@ -8,4 +8,6 @@
   (thread (lambda () (start-litestream-backup-at-path p)))
   conn)
 
-(provide (all-defined-out))
+(provide
+ (all-from-out db)
+ (all-defined-out))
