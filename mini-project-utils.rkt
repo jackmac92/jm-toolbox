@@ -2,7 +2,8 @@
 
 (require reprovide/reprovide)
 
-(reprovide racket/format
+(reprovide threading
+           racket/format
            racket/file
            racket/list
            racket/string
@@ -11,7 +12,6 @@
            basedir
            "./shellpers.rkt"
            "./json.rkt")
-
 
 (define make-log-file
   (lambda components
@@ -25,11 +25,9 @@
     ;; log-file
     (open-output-file logfilepath #:exists 'append)))
 
-(define-syntax-rule (wheredoicomefrom)
-  (variable-reference->namespace (#%variable-reference)))
+(define-syntax-rule (wheredoicomefrom) (variable-reference->namespace (#%variable-reference)))
 
-(define-syntax-rule (whereami)
-  (variable-reference->module-source (#%variable-reference)))
+(define-syntax-rule (whereami) (variable-reference->module-source (#%variable-reference)))
 
 (define-syntax-rule (with-project-logging body)
   (parameterize ([current-basedir-program-name (whereami)])
