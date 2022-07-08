@@ -1,4 +1,4 @@
-#lang racket/base
+#lang racket
 
 (require reprovide/reprovide)
 
@@ -31,10 +31,22 @@
 (define-syntax-rule (whereami) (variable-reference->module-source (#%variable-reference)))
 (define-syntax-rule (whereami2) (variable-reference->resolved-module-path (#%variable-reference)))
 
-(define-syntax-rule (with-project-logging body)
+(define (with-project-logging-fn cb)
+  (parameterize ([current-basedir-program-name (whereami)])
+    (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) (cb) 'debug)))
+
+(define-syntax-rule (with-project-logging-stx body)
   (parameterize ([current-basedir-program-name (whereami)])
     (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
-                          ;; TODO somehow run body
+                          body
                           'debug)))
 
+(define-syntax-rule (with-project-logging body)
+  #'(begin
+      (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) body 'debug)))
+
 (provide (all-defined-out))
+
+(module+ test
+  (require rackunit)
+  (check-not-exn (lambda () (displayln (whereami)))))
