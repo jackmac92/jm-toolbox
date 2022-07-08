@@ -4,6 +4,7 @@
          ;; group-by conflicts with racket/list
          (except-in deta group-by)
          racket/string
+         gregor
          basedir
          "./litestream.rkt")
 
@@ -30,14 +31,26 @@
 (define (make-feed feed-id feed-url feed-title feed-items)
   (feed feed-id feed-url feed-title feed-items))
 
+(define (add-dummy-feed)
+  (make-persistent-feed-item
+   #:title "Hello world"
+   #:url "Hello world"
+   #:author-name "Hello world"
+   #:author-email "Hello world"
+   #:published-date (date 2000 1 1)
+   #:updated-date (date 2000 1 1)
+   #:content "Hello world"))
+
+
+
 
 (define (init)
   (parameterize ([current-basedir-program-name "rss-feed-generator"])
     (define conn (litestream-dwim))
     (create-table! conn 'persistent-feed-item)
-    (in-entities
-     conn
-     (from persistent-feed-item #:as potato))))
+
+    ;; (insert! conn (add-dummy-feed))
+    (in-entities conn (from persistent-feed-item #:as potato))))
 
 
 (module+ main
