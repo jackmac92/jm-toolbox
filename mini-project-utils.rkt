@@ -26,27 +26,32 @@
     ;; log-file
     (open-output-file logfilepath #:exists 'append)))
 
-(define-syntax-rule (wheredoicomefrom) (variable-reference->namespace (#%variable-reference)))
 
-(define-syntax-rule (whereami) (variable-reference->module-source (#%variable-reference)))
-(define-syntax-rule (whereami2) (variable-reference->resolved-module-path (#%variable-reference)))
+(define (walk-up-path-until-info.rkt-found-1 p)
+  (if (file-exists? (build-path p "info.rkt"))
+      p
+      (walk-up-path-until-info.rkt-found-1 (simplify-path (build-path p 'up)))))
+
+(define (walk-up-path-until-info.rkt-found p)
+  (define-values (base name must-be-dir) (split-path (walk-up-path-until-info.rkt-found-1 p)))
+  (string->symbol (path->string name)))
+
+(define-syntax-rule (pkg-name!)
+  (walk-up-path-until-info.rkt-found
+   (variable-reference->module-source (#%variable-reference))))
 
 (define (with-project-logging-fn cb)
-  (parameterize ([current-basedir-program-name (whereami)])
+  (parameterize ([current-basedir-program-name (pkg-name!)])
     (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) (cb) 'debug)))
 
-(define-syntax-rule (with-project-logging-stx body)
-  (parameterize ([current-basedir-program-name (whereami)])
-    (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
-                          body
-                          'debug)))
-
 (define-syntax-rule (with-project-logging body)
-  #'(begin
-      (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) body 'debug)))
+  (parameterize ([current-basedir-program-name (pkg-name!)])
+    (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
+      body
+      'debug)))
 
 (provide (all-defined-out))
 
 (module+ test
   (require rackunit)
-  (check-not-exn (lambda () (displayln (whereami)))))
+  (check-not-exn (lambda () (displayln (pkg-name!)))))
