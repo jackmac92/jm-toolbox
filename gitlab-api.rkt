@@ -6,7 +6,7 @@
          racket/string
          net/uri-codec)
 
-(define gitlab-api-token (make-parameter (getenv "LAB_CORE_TOKEN")))
+(define gitlab-api-token (make-parameter (getenv "GITLAB_API_TOKEN")))
 (define gitlab-host (make-parameter "gitlab.com"))
 
 (define (gitlab-api-url)

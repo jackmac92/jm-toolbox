@@ -10,6 +10,7 @@
            racket/logging
            racket/port
            basedir
+           "./litestream.rkt"
            "./shellpers.rkt"
            "./json.rkt")
 
@@ -28,6 +29,7 @@
 (define-syntax-rule (wheredoicomefrom) (variable-reference->namespace (#%variable-reference)))
 
 (define-syntax-rule (whereami) (variable-reference->module-source (#%variable-reference)))
+(define-syntax-rule (whereami2) (variable-reference->resolved-module-path (#%variable-reference)))
 
 (define-syntax-rule (with-project-logging body)
   (parameterize ([current-basedir-program-name (whereami)])
