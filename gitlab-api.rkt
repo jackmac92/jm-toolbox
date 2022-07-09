@@ -1,5 +1,6 @@
 #lang racket/base
 (require net/http-easy
+         json
          racket/string
          racket/list
          net/uri-codec)
@@ -11,30 +12,47 @@
   (format "https://~a/api/v4/" (gitlab-host)))
 
 (define (unbox-if-needed x)
-  (if (box? x)
-      (unbox x)
-      x))
+  (if (box? x) (unbox x) x))
 
 (define (gitlab-request path #:method [method get] #:params [params #f] #:payload [payload #f])
+  (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
-                         #:json payload
                          #:headers (hasheq (string->symbol "Private-Token") (gitlab-api-token)))))
 
-(define (gitlab-api-exhaust-pagination endpoint kw-keys kw-values)
-  (define result (keyword-apply gitlab-request kw-keys kw-values (list endpoint)))
+(define (symbol->keyword a)
+  (string->keyword (symbol->string a)))
+
+(define (hash->queryparams x)
+  (for/list ([a (hash->list x)])
+    (cons (car a) (format "~a" (cdr a)))))
+
+(define (hash->keyapply-pair x)
+  (define keys (list))
+  (define valz (list))
+  (for ([a (hash->list x)])
+    (set! keys (cons (symbol->keyword (car a)) keys))
+    (set! valz (cons (cdr a) valz)))
+  (list keys valz))
+
+(define (gitlab-api-exhaust-pagination endpoint argshash)
+  (define result
+    (apply keyword-apply
+           (append (list gitlab-request) (hash->keyapply-pair argshash) (list (list endpoint)))))
+
   (if (empty? result)
       result
-      (begin
-        (let ((last-id (hash-ref (last result) 'id)))
-          ;; set id_after as the first value in kw-keys
-          ;; and the id as the first value in kw-values
+      (cons result
+            (gitlab-api-exhaust-pagination
+             endpoint
+             (hash-set argshash 'params
+                           (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
 
-          (displayln result)
-          (cons result (gitlab-api-exhaust-pagination endpoint kw-keys kw-values))))))
-;; (keyword-apply f '(#:y) '(2) '(1))
+
 (define (gitlab-list-all-projects)
-  (gitlab-api-exhaust-pagination "projects" '(#:params) (list (list (cons 'sort "asc") (cons 'order_by "id")  (cons 'min_access_level "30") (cons 'archived #f)))))
+  (gitlab-api-exhaust-pagination
+   "projects"
+   (hasheq 'params (hasheq 'sort "asc" 'order_by "id" 'min_access_level "30" 'archived "false"))))
 
 (define (gitlab-project-api-url proj-name)
   (format "projects/~a" (if (string-contains? proj-name "/") (uri-encode proj-name) proj-name)))
@@ -46,5 +64,4 @@
 
 (module+ test
   (require rackunit)
-  (check-not-exn (lambda ()
-                   (gitlab-list-all-projects))))
+  (check-not-exn (lambda () (write-json (gitlab-list-all-projects)))))
