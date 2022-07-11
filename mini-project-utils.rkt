@@ -33,8 +33,8 @@
       (walk-up-path-until-info.rkt-found-1 (simplify-path (build-path p 'up)))))
 
 (define (walk-up-path-until-info.rkt-found p)
-  (define-values (base name must-be-dir) (split-path (walk-up-path-until-info.rkt-found-1 p)))
-  (string->symbol (path->string name)))
+  (define-values (_base name _must-be-dir) (split-path (walk-up-path-until-info.rkt-found-1 p)))
+  (path->string name))
 
 (define-syntax-rule (pkg-name!)
   (walk-up-path-until-info.rkt-found
