@@ -44,11 +44,12 @@
   (parameterize ([current-basedir-program-name (pkg-name!)])
     (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) (cb) 'debug)))
 
-(define-syntax-rule (with-project-logging body)
-  #'(parameterize ([current-basedir-program-name (pkg-name!)])
-      (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
-        body
-        'debug)))
+(define-syntax-rule (with-project-logging body ...)
+  (with-syntax ([thisprjname (pkg-name!)])
+    #'(parameterize ([current-basedir-program-name thisprjname])
+        (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
+          body ...
+          'debug))))
 
 (provide (all-defined-out))
 
@@ -56,4 +57,5 @@
   (require rackunit)
   (check-not-exn (lambda () (displayln (pkg-name!))))
   (check-not-exn (lambda () (with-project-logging
+                                (displayln (current-basedir-program-name))
                                 (displayln "tada")))))
