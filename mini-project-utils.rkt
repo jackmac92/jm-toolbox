@@ -26,7 +26,6 @@
     ;; log-file
     (open-output-file logfilepath #:exists 'append)))
 
-
 (define (walk-up-path-until-info.rkt-found-1 p)
   (if (file-exists? (build-path p "info.rkt"))
       p
@@ -37,25 +36,20 @@
   (path->string name))
 
 (define-syntax-rule (pkg-name!)
-  (walk-up-path-until-info.rkt-found
-   (variable-reference->module-source (#%variable-reference))))
+  (walk-up-path-until-info.rkt-found (variable-reference->module-source (#%variable-reference))))
 
 (define (with-project-logging-fn cb)
   (parameterize ([current-basedir-program-name (pkg-name!)])
     (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) (cb) 'debug)))
 
 (define-syntax-rule (with-project-logging body ...)
-  (with-syntax ([thisprjname (pkg-name!)])
-    #'(parameterize ([current-basedir-program-name thisprjname])
-        (with-logging-to-port (make-log-file (writable-runtime-file "out.log"))
-          body ...
-          'debug))))
+  #'(parameterize ([current-basedir-program-name #'(pkg-name!)])
+      (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) body ... 'debug)))
 
 (provide (all-defined-out))
 
 (module+ test
   (require rackunit)
   (check-not-exn (lambda () (displayln (pkg-name!))))
-  (check-not-exn (lambda () (with-project-logging
-                                (displayln (current-basedir-program-name))
-                                (displayln "tada")))))
+  (check-not-exn
+   (lambda () (with-project-logging (displayln (current-basedir-program-name)) (displayln "tada")))))
