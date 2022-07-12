@@ -18,7 +18,7 @@
   (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
-                         #:headers (hasheq (string->symbol "Private-Token") (gitlab-api-token)))))
+                         #:headers (hasheq 'Private-Token (gitlab-api-token)))))
 
 (define (symbol->keyword a)
   (string->keyword (symbol->string a)))
