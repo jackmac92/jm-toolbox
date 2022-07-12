@@ -1,15 +1,6 @@
 #lang racket/base
 
 (require racket/system
-         racket/port
-         racket/string
-         racket/list
-         racket/file
-         racket/logging
-
-         json
-         basedir
-
          "./notmuch.rkt"
          "./mini-project-utils.rkt"
          "./notify.rkt"
