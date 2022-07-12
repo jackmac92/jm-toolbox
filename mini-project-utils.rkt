@@ -4,8 +4,9 @@
 
 (reprovide threading
            racket/format
+           deta
            racket/file
-           racket/list
+           (except-in racket/list group-by)
            racket/string
            racket/logging
            racket/port
@@ -51,5 +52,4 @@
 (module+ test
   (require rackunit)
   (check-not-exn (lambda () (displayln (pkg-name!))))
-  (check-not-exn
-   (lambda () (with-project-logging-fn (lambda () (displayln "tada"))))))
+  (check-not-exn (lambda () (with-project-logging-fn (lambda () (displayln "tada"))))))
