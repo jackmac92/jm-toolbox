@@ -14,7 +14,11 @@
 (define (unbox-if-needed x)
   (if (box? x) (unbox x) x))
 
-(define (gitlab-request path #:method [method get] #:params [params #f] #:payload [payload #f])
+(define (hash->queryparams x)
+  (for/list ([a (hash->list x)])
+    (cons (car a) (format "~a" (cdr a)))))
+
+(define (gitlab-request path #:method [method get] #:params [params #f])
   (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
@@ -22,10 +26,6 @@
 
 (define (symbol->keyword a)
   (string->keyword (symbol->string a)))
-
-(define (hash->queryparams x)
-  (for/list ([a (hash->list x)])
-    (cons (car a) (format "~a" (cdr a)))))
 
 (define (hash->keyapply-pair x)
   (define keys (list))
