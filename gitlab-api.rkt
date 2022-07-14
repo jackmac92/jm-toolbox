@@ -18,7 +18,7 @@
   (for/list ([a (hash->list x)])
     (cons (car a) (format "~a" (cdr a)))))
 
-(define (gitlab-request path #:method [method get] #:params [params #f])
+(define (gitlab-request path #:method [method get] #:params [params (list)])
   (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
