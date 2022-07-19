@@ -20,13 +20,14 @@
     (cons (car a) (format "~a" (cdr a)))))
 
 (define/contract (gitlab-request path #:method [method get] #:params [params (list)])
-  (-> non-empty-string? #:method procedure? #:params list? jsexpr?)
+  (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
   (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
                          #:headers (hasheq 'Private-Token (gitlab-api-token)))))
 
-(define (symbol->keyword a)
+(define/contract (symbol->keyword a)
+  (-> symbol? keyword?)
   (string->keyword (symbol->string a)))
 
 (define (hash->keyapply-pair x)
@@ -66,4 +67,5 @@
 
 (module+ test
   (require rackunit)
-  (check-not-exn (lambda () (write-json (gitlab-list-all-projects)))))
+  (check-not-exn (lambda () (gitlab-list-all-projects)))
+  (check-not-exn (lambda () (gitlab-request "projects"))))
