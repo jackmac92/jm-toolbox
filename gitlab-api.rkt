@@ -1,6 +1,7 @@
 #lang racket/base
 (require net/http-easy
          json
+         racket/contract
          racket/string
          racket/list
          net/uri-codec)
@@ -18,7 +19,8 @@
   (for/list ([a (hash->list x)])
     (cons (car a) (format "~a" (cdr a)))))
 
-(define (gitlab-request path #:method [method get] #:params [params (list)])
+(define/contract (gitlab-request path #:method [method get] #:params [params (list)])
+  (-> non-empty-string? #:method procedure? #:params list? jsexpr?)
   (set! params (if (hash? params) (hash->queryparams params) params))
   (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
                          #:params params
