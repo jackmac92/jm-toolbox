@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require racket/system racket/port racket/string)
+(require racket/system racket/contract racket/port racket/string)
 
 (define my-shell-debug (make-parameter #f))
 
@@ -10,12 +10,14 @@
                  (displayln c))
                (system c)))
 
-(define (system->string cmd)
+(define/contract (system->string cmd)
+  (-> non-empty-string? string?)
   (with-output-to-string (lambda ()
                            (unless (system cmd)
                              (error "shell command failed")))))
 
-(define (command->output-lines cmd #:trim [trim-output #t])
+(define/contract (command->output-lines cmd #:trim [trim-output #t])
+  (->* (non-empty-string?) (#:trim boolean?) (non-empty-listof string?))
   (let ((rawout (string-split (system->string cmd) "\n")))
     (if trim-output
         (map string-trim rawout)
