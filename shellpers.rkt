@@ -28,4 +28,21 @@
             ([p ps])
     (format "~a ~a" acc (if (string? p) p (format "~a=~a" (car p) (cdr p))))))
 
+(define (proc-command->string command . args)
+  (let-values (((sub stdout _stdin _stderr) (apply subprocess
+                                                   `(#f
+                                                     ,(current-input-port)
+                                                     ,(current-error-port)
+                                                     ,(find-executable-path command)
+                                                     ,@args))))
+    (subprocess-wait sub)
+    (let ((output (port->string stdout)))
+      (if (eqv? 0 (subprocess-status sub))
+          output
+          (error "Command failed:" (cons command args))))))
+
 (provide (all-defined-out))
+
+(module+ test
+  (require rackunit)
+  (check-not-exn (lambda () (proc-command->string "ls"))))
