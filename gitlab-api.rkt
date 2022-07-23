@@ -22,9 +22,12 @@
 (define/contract (gitlab-request path #:method [method get] #:params [params (list)])
   (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
   (set! params (if (hash? params) (hash->queryparams params) params))
-  (response-json (method (format "https://~a/api/v4/~a" (gitlab-host) path)
-                         #:params params
-                         #:headers (hasheq 'Private-Token (gitlab-api-token)))))
+  (define r (method (format "https://~a/api/v4/~a" (gitlab-host) path
+                        #:params params
+                        #:headers (hasheq 'Private-Token (gitlab-api-token)))))
+  (when (>= (response-status-code r) 400)
+    (error (response-status-message r)))
+  (response-json r))
 
 (define/contract (symbol->keyword a)
   (-> symbol? keyword?)
