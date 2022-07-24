@@ -2,6 +2,7 @@
 (require net/http-easy
          json
          racket/contract
+         racket/logging
          racket/string
          racket/list
          net/uri-codec)
@@ -26,18 +27,18 @@
   (getenv "GITLAB_API_TOKEN"))
 
 (define/contract (gitlab-request path #:method [method get] #:params [params (list)])
-  (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
-  (set! params (if (hash? params) (hash->queryparams params) params))
-  (define r (method (format "https://~a/api/v4/~a" (gitlab-host) path
-                        #:params params
-                        #:headers (hasheq 'Private-Token (gitlab-api-call-token)))))
-  (when (>= (response-status-code r) 400)
-    (error (response-status-message r)))
-  (response-json r))
+                 (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
+                 (set! params (if (hash? params) (hash->queryparams params) params))
+                 (log-debug "Sending request with params ~a" params)
+                 (define r
+                   (method (format "https://~a/api/v4/~a" (gitlab-host) path)
+                           #:params params
+                           #:headers (hasheq 'Private-Token (gitlab-api-call-token))))
+                 (when (>= (response-status-code r) 400)
+                   (error (response-status-message r)))
+                 (response-json r))
 
-(define/contract (symbol->keyword a)
-  (-> symbol? keyword?)
-  (string->keyword (symbol->string a)))
+(define/contract (symbol->keyword a) (-> symbol? keyword?) (string->keyword (symbol->string a)))
 
 (define (hash->keyapply-pair x)
   (define keys (list))
@@ -57,9 +58,10 @@
       (cons result
             (gitlab-api-exhaust-pagination
              endpoint
-             (hash-set argshash 'params
-                           (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
-
+             (hash-set
+              argshash
+              'params
+              (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
 
 (define (gitlab-list-all-projects)
   (gitlab-api-exhaust-pagination
