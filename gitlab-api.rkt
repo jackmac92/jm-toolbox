@@ -6,7 +6,7 @@
          racket/list
          net/uri-codec)
 
-(define gitlab-api-token (make-parameter (getenv "GITLAB_API_TOKEN")))
+(define gitlab-api-token (make-parameter ""))
 (define gitlab-host (make-parameter "gitlab.com"))
 
 (define (gitlab-api-url)
@@ -19,12 +19,18 @@
   (for/list ([a (hash->list x)])
     (cons (car a) (format "~a" (cdr a)))))
 
+(define (gitlab-api-call-token)
+  ;; (if (empty? (gitlab-api-token))
+  ;;     (getenv "GITLAB_API_TOKEN")
+  ;;     (gitlab-api-token))
+  (getenv "GITLAB_API_TOKEN"))
+
 (define/contract (gitlab-request path #:method [method get] #:params [params (list)])
   (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
   (set! params (if (hash? params) (hash->queryparams params) params))
   (define r (method (format "https://~a/api/v4/~a" (gitlab-host) path
                         #:params params
-                        #:headers (hasheq 'Private-Token (gitlab-api-token)))))
+                        #:headers (hasheq 'Private-Token (gitlab-api-call-token)))))
   (when (>= (response-status-code r) 400)
     (error (response-status-message r)))
   (response-json r))
