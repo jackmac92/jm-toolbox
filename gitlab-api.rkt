@@ -2,7 +2,6 @@
 (require net/http-easy
          json
          racket/contract
-         racket/logging
          racket/string
          racket/list
          net/uri-codec)
@@ -27,7 +26,6 @@
                  (unless (non-empty-string? gl-token)
                    (error "No token found in parameter"))
                  (define url (format "https://~a/api/v4/~a" (gitlab-host) path))
-                 (log-debug "Sending request to ~a with token ~a" url gl-token)
                  (define r (method url #:params params #:headers (hasheq 'Private-Token gl-token)))
                  (when (>= (response-status-code r) 400)
                    (error (response-status-message r)))
