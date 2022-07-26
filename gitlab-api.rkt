@@ -19,8 +19,8 @@
   (for/list ([a (hash->list x)])
     (cons (car a) (format "~a" (cdr a)))))
 
-(define/contract (gitlab-request path #:method [method get] #:params [params (hasheq)])
-                 (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
+(define/contract (gitlab-request-raw path #:method [method get] #:params [params (hasheq)])
+                 (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) response?)
                  (set! params (if (hash? params) (hash->queryparams params) params))
                  (define gl-token (gitlab-api-token))
                  (unless (non-empty-string? gl-token)
@@ -29,7 +29,11 @@
                  (define r (method url #:params params #:headers (hasheq 'Private-Token gl-token)))
                  (when (>= (response-status-code r) 400)
                    (error (response-status-message r)))
-                 (response-json r))
+                 r)
+
+(define/contract (gitlab-request path #:method [method get] #:params [params (hasheq)])
+                 (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
+                 (response-json (gitlab-request-raw path #:method method #:params params)))
 
 (define/contract (symbol->keyword a) (-> symbol? keyword?) (string->keyword (symbol->string a)))
 
@@ -44,9 +48,10 @@
 (define (gitlab-api-exhaust-pagination endpoint argshash)
   (define result
     (apply keyword-apply
-           (append (list gitlab-request) (hash->keyapply-pair argshash) (list (list endpoint)))))
-
-  (if (empty? result)
+           (append (list gitlab-request-raw) (hash->keyapply-pair argshash) (list (list endpoint)))))
+  (define is-last-page (empty? (response-json result)))
+  ;; (response-headers result)
+  (if is-last-page
       result
       (cons result
             (gitlab-api-exhaust-pagination
@@ -54,7 +59,8 @@
              (hash-set
               argshash
               'params
-              (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
+             ;; (hash-set (hash-ref argshash 'params) 'id_after (hash-ref  (response-headers result) 'x-next-page))
+             (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
 
 (define (gitlab-list-all-projects)
   (gitlab-api-exhaust-pagination
