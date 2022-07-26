@@ -1,4 +1,5 @@
 #lang racket/base
+
 (require net/http-easy
          json
          racket/contract
@@ -21,15 +22,13 @@
 
 (define/contract (gitlab-request-raw path #:method [method get] #:params [params (hasheq)])
                  (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) response?)
-                 (set! params (if (hash? params) (hash->queryparams params) params))
                  (define gl-token (gitlab-api-token))
                  (unless (non-empty-string? gl-token)
                    (error "No token found in parameter"))
-                 (define url (format "https://~a/api/v4/~a" (gitlab-host) path))
-                 (define r (method url #:params params #:headers (hasheq 'Private-Token gl-token)))
-                 (when (>= (response-status-code r) 400)
-                   (error (response-status-message r)))
-                 r)
+                 (set! params (if (hash? params) (hash->queryparams params) params))
+                 (method (format "https://~a/api/v4/~a" (gitlab-host) path)
+                         #:params params
+                         #:headers (hasheq 'Private-Token gl-token)))
 
 (define/contract (gitlab-request path #:method [method get] #:params [params (hasheq)])
                  (->* (non-empty-string?) (#:method any/c #:params (or/c hash? list?)) jsexpr?)
@@ -45,27 +44,42 @@
     (set! valz (cons (cdr a) valz)))
   (list keys valz))
 
+(define/contract (bytes-header->pair s)
+                 (-> bytes? pair?)
+                 (define parts (string-split (bytes->string/utf-8 s) ":"))
+                 (when (empty? parts)
+                   (error "Invalid header string"))
+                 (define key (car parts))
+                 (define val (string-join (cdr parts)))
+                 (cons (string->symbol (string-downcase key)) val))
+
 (define (gitlab-api-exhaust-pagination endpoint argshash)
+  (displayln (format "Request start: ~a" endpoint))
   (define result
     (apply keyword-apply
            (append (list gitlab-request-raw) (hash->keyapply-pair argshash) (list (list endpoint)))))
-  (define is-last-page (empty? (response-json result)))
-  ;; (response-headers result)
+  (define respbody (response-json result))
+  (define respheaders
+    (for/hasheq ([h (response-headers result)])
+      (let ([x (bytes-header->pair h)]) (values (car x) (cdr x)))))
+
+  (define is-last-page (equal? (hash-ref respheaders 'x-page) (hash-ref respheaders 'x-total-pages)))
+  (displayln (format "Request wrapping up"))
+  (sleep 3)
   (if is-last-page
-      result
-      (cons result
+      respbody
+      (cons respbody
             (gitlab-api-exhaust-pagination
              endpoint
              (hash-set
               argshash
               'params
-             ;; (hash-set (hash-ref argshash 'params) 'id_after (hash-ref  (response-headers result) 'x-next-page))
-             (hash-set (hash-ref argshash 'params) 'id_after (hash-ref (last result) 'id)))))))
+              (hash-set (hash-ref argshash 'params) 'page (string-trim (hash-ref respheaders 'x-next-page))))))))
 
 (define (gitlab-list-all-projects)
   (gitlab-api-exhaust-pagination
    "projects"
-   (hasheq 'params (hasheq 'sort "asc" 'order_by "id" 'min_access_level "30" 'archived "false"))))
+   (hasheq 'params (hasheq 'sort "asc" 'order_by "id" 'min_access_level 30 'archived "false"))))
 
 (define (gitlab-project-api-url proj-name)
   (format "projects/~a" (if (string-contains? proj-name "/") (uri-encode proj-name) proj-name)))
@@ -77,5 +91,6 @@
 
 (module+ test
   (require rackunit)
-  ;; (check-not-exn (lambda () (gitlab-list-all-projects)))
-  (check-not-exn (lambda () (gitlab-request "projects"))))
+  (parameterize* ([gitlab-host "gitlab.com"] [gitlab-api-token (getenv "GITLAB_API_TOKEN")])
+    ;; (check-not-exn (lambda () (gitlab-request "projects")))
+    (check-not-exn (lambda () (gitlab-list-all-projects)))))
