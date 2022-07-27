@@ -41,7 +41,7 @@
 
 (define (with-project-logging-fn cb)
   (parameterize ([current-basedir-program-name (pkg-name!)])
-    (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) (cb) 'debug)))
+    (with-logging-to-port (make-log-file (writable-runtime-file "out.log")) cb 'debug)))
 
 (define-syntax-rule (with-project-logging body)
   (parameterize ([current-basedir-program-name (pkg-name!)])
