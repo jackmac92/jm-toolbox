@@ -54,7 +54,6 @@
                  (cons (string->symbol (string-downcase key)) val))
 
 (define (gitlab-api-exhaust-pagination endpoint argshash)
-  (displayln (format "Request start: ~a" endpoint))
   (define result
     (apply keyword-apply
            (append (list gitlab-request-raw) (hash->keyapply-pair argshash) (list (list endpoint)))))
@@ -64,17 +63,16 @@
       (let ([x (bytes-header->pair h)]) (values (car x) (cdr x)))))
 
   (define is-last-page (equal? (hash-ref respheaders 'x-page) (hash-ref respheaders 'x-total-pages)))
-  (displayln (format "Request wrapping up"))
-  (sleep 3)
   (if is-last-page
       respbody
       (cons respbody
             (gitlab-api-exhaust-pagination
              endpoint
-             (hash-set
-              argshash
-              'params
-              (hash-set (hash-ref argshash 'params) 'page (string-trim (hash-ref respheaders 'x-next-page))))))))
+             (hash-set argshash
+                       'params
+                       (hash-set (hash-ref argshash 'params)
+                                 'page
+                                 (string-trim (hash-ref respheaders 'x-next-page))))))))
 
 (define (gitlab-list-all-projects)
   (gitlab-api-exhaust-pagination
@@ -92,5 +90,5 @@
 (module+ test
   (require rackunit)
   (parameterize* ([gitlab-host "gitlab.com"] [gitlab-api-token (getenv "GITLAB_API_TOKEN")])
-    ;; (check-not-exn (lambda () (gitlab-request "projects")))
+    (check-not-exn (lambda () (gitlab-request "projects")))
     (check-not-exn (lambda () (gitlab-list-all-projects)))))
