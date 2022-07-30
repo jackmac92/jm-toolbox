@@ -74,10 +74,24 @@
                                  'page
                                  (string-trim (hash-ref respheaders 'x-next-page))))))))
 
+;; (define (gitlab-api-exhaust-pagination-async endpoint argshash)
+;;   ;; make HEAD request to get the total number of pages
+;;   ())
+
 (define (gitlab-list-all-projects)
   (gitlab-api-exhaust-pagination
    "projects"
    (hasheq 'params (hasheq 'sort "asc" 'order_by "id" 'min_access_level 30 'archived "false"))))
+
+(define (gitlab-list-all-project-pipelines project-id)
+  (gitlab-api-exhaust-pagination
+   (format "~a/pipelines" (gitlab-project-api-url project-id))
+   (hasheq 'params (hasheq 'sort "asc" 'order_by "id"))))
+
+(define (gitlab-list-all-ssh-key-fingerprints)
+  (gitlab-api-exhaust-pagination
+   "user/keys"
+   (hasheq 'params (hasheq 'sort "asc" 'order_by "id"))))
 
 (define (gitlab-project-api-url proj-name)
   (format "projects/~a" (if (string-contains? proj-name "/") (uri-encode proj-name) proj-name)))
@@ -90,5 +104,14 @@
 (module+ test
   (require rackunit)
   (parameterize* ([gitlab-host "gitlab.com"] [gitlab-api-token (getenv "GITLAB_API_TOKEN")])
+    (check-not-exn (lambda ()
+                     (displayln
+                      (length
+                       (gitlab-list-all-ssh-key-fingerprints)))))
+    (check-not-exn (lambda ()
+                     (displayln
+                      (format "href router racket has ~a pipelines"
+                              (length
+                               (gitlab-list-all-project-pipelines "jackmac92/href-router-racket"))))))
     (check-not-exn (lambda () (gitlab-request "projects")))
     (check-not-exn (lambda () (gitlab-list-all-projects)))))
