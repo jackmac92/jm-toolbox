@@ -1,5 +1,7 @@
 #lang racket
 
+;; TODO create a typed project configuration file 
+;; by just using contracts? e.g. the contract is what enforces the defined config structure?
 (require reprovide/reprovide)
 
 (reprovide threading
