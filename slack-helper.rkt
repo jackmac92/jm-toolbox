@@ -4,9 +4,10 @@
          net/http-easy)
 
 (define (slack-api-req path body)
-  (post (format "https://slack.com/api/~a" path)
-        #:auth (bearer-auth (getenv "SLACK_API_TOKEN"))
-        #:json body))
+  (response-json
+   (post (format "https://slack.com/api/~a" path)
+         #:auth (bearer-auth (getenv "SLACK_API_TOKEN"))
+         #:json body)))
 
 (define forty-five-min (* 60 45))
 
