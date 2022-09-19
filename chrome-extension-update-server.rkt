@@ -11,15 +11,21 @@
                                    </app>
                                    </gupdate>})
 
+
+(define link-source (make-parameter 's3))
+
 (define (create-xml-dwim name chrome-ext-id)
+  ;; TODO how do I deduce the chrome-ext-id via gitlab published assets?
   (log-debug (format "creating xml on request for ~a" name))
   (define latest-release (car (gitlab-project-request (format "jackmac92/~a" name) "releases")))
   (define latest-version (hash-ref latest-release 'tag_name))
   (log-debug (format "~a at version ~a" name latest-version))
   (define latest-release-details (gitlab-project-request (format "jackmac92/~a" name) (format "releases/~a" latest-version)))
-  (define url (for/first ([l (hash-ref (hash-ref latest-release-details 'assets) 'links)]
-                          #:when (equal? (hash-ref l 'name) "web-ext-dist.crx"))
-                (hash-ref l 'url)))
+  (define url (if (eq? (link-source) 's3)
+                  (format "https://project-assets-public-hosting.s3.amazonaws.com/web-ext/~a/web-ext-dist.crx" name)
+                  (for/first ([l (hash-ref (hash-ref latest-release-details 'assets) 'links)]
+                              #:when (equal? (hash-ref l 'name) "web-ext-dist.crx"))
+                         (hash-ref l 'url))))
   (print-xml url chrome-ext-id latest-version))
 
 (define (lookup-ext-xml req)
