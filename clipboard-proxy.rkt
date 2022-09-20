@@ -27,15 +27,24 @@
   (system (format "xdg-open '~a'" (extract-payload req)))
   (response/jsexpr (list "ok")))
 
+(define (debug-request req)
+  (response/jsexpr (list
+                    (format "~a" (url-path (request-uri req)))
+                    (format "~a" (url->path (request-uri req)))
+                    (url->string (request-uri req))
+                    (format "~a" (request-host-ip req)))
+                   #:code 400))
+
 ;; URL routing table (URL dispatcher).
 (define-values (dispatch _generate-url)
   (dispatch-rules
    [("clipcopy") #:method "post" write-system-pasteboard]
-   [("open") xdg-open]
+   [("open") #:method "post" xdg-open]
    [("health") (lambda (_) (response/empty))]
-   [else (error "There is no procedure to handle the url.")]))
+   [else debug-request]))
 
 (define (request-handler request)
+  ;; (displayln (url->string (request-uri request)))
   (dispatch request))
 
 (module+ main
