@@ -1,13 +1,22 @@
 #lang racket/base
 
-(require racket/cmdline
+(require json
+         racket/cmdline
          net/http-easy)
 
-(define (slack-api-req path body)
-  (response-json
-   (post (format "https://slack.com/api/~a" path)
-         #:auth (bearer-auth (getenv "SLACK_API_TOKEN"))
-         #:json body)))
+(define (slack-resp-wrapper resp)
+  (write-json
+   (response-json resp)))
+
+(define (slack-api-post path body)
+  (slack-resp-wrapper (post (format "https://slack.com/api/~a" path)
+                            #:auth (bearer-auth (getenv "SLACK_API_TOKEN"))
+                            #:json body)))
+
+(define (slack-api-get path [params (list)])
+  (slack-resp-wrapper (get (format "https://slack.com/api/~a" path)
+                           #:params params
+                           #:auth (bearer-auth (getenv "SLACK_API_TOKEN")))))
 
 (define forty-five-min (* 60 45))
 
@@ -38,10 +47,11 @@
                   'status_text
                   "test")))
 
-(command-line #:program "slacker"
-              #:args (action [subcommand #f])
-              (cond
-                [(string=? action "status")
-                 (slack-api-req
-                  "users.profile.set"
-                  (hasheq 'profile (hash-ref presets (string->symbol (or subcommand "reset")))))]))
+(command-line
+ #:program "slacker"
+ #:args (action [subcommand #f])
+ (cond
+   [(string=? action "status")
+    (slack-api-post "users.profile.set"
+                    (hasheq 'profile (hash-ref presets (string->symbol (or subcommand "reset")))))]
+   [(string=? action "ls-users") (slack-api-get "users.list")]))
